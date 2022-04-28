@@ -1,0 +1,2 @@
+# neo
+sudo curl -fsSL https://raw.githubusercontent.com/SoDa-debug/neo/main/01.sh -o 01.sh && sudo sh 01.sh
