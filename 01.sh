@@ -128,7 +128,7 @@ preinstall_l2tp(){
     echo
     echo "ServerIP:${IP}"
     echo "Server Local IP:${iprange}.1"
-    echo "Client Remote IP Range:${iprange}.2-${iprange}.10"
+    echo "Client Remote IP Range:${iprange}.2-${iprange}.22"
     echo "PSK:${mypsk}"
     echo "username:${username}"
 	echo "password:${password}"
