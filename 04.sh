@@ -195,17 +195,7 @@ PrivateKey = ${SERVER_PRIV_KEY}" >"/etc/wireguard/${SERVER_WG_NIC}.conf"
 #		echo "PostUp = iptables -A FORWARD -i ${SERVER_PUB_NIC} -o ${SERVER_WG_NIC} -j ACCEPT; iptables -A FORWARD -i ${SERVER_WG_NIC} -j ACCEPT; #iptables -t nat -A POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE; ip6tables -A FORWARD -i ${SERVER_WG_NIC} -j ACCEPT; ip6tables -t nat -A #POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE
 #PostDown = iptables -D FORWARD -i ${SERVER_PUB_NIC} -o ${SERVER_WG_NIC} -j ACCEPT; iptables -D FORWARD -i ${SERVER_WG_NIC} -j ACCEPT; iptables -t #nat -D POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE; ip6tables -D FORWARD -i ${SERVER_WG_NIC} -j ACCEPT; ip6tables -t nat -D POSTROUTING -o #${SERVER_PUB_NIC} -j MASQUERADE" >>"/etc/wireguard/${SERVER_WG_NIC}.conf"
 #	fi
-# Add the hnt 44158 & port forwarding
-    echo PostUp = iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1240 >> /etc/wireguard/wg0.conf
-    echo PostUp = iptables -A FORWARD -i wg0 -j ACCEPT >> /etc/wireguard/wg0.conf
-    echo PostUp = iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE >> /etc/wireguard/wg0.conf
-    echo PostUp = iptables -A FORWARD -i eth0 -o wg0 -p tcp --syn --dport 44158 -m conntrack --ctstate NEW -j ACCEPT >> /etc/wireguard/wg0.conf
-    echo PostUp = iptables -A FORWARD -i eth0 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT >> /etc/wireguard/wg0.conf
-    echo PostDown = iptables -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1240 >> /etc/wireguard/wg0.conf
-    echo PostDown = iptables -D FORWARD -i wg0 -j ACCEPT >> /etc/wireguard/wg0.conf
-    echo PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE >> /etc/wireguard/wg0.conf
-    echo PostDown = iptables -D FORWARD -i eth0 -o wg0 -p tcp --syn --dport 44158 -m conntrack --ctstate NEW -j ACCEPT >> /etc/wireguard/wg0.conf
-    echo PostDown = iptables -D FORWARD -i eth0 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT >> /etc/wireguard/wg0.conf
+
 	# Enable routing on the server
 	echo "net.ipv4.ip_forward = 1
 net.ipv6.conf.all.forwarding = 1" >/etc/sysctl.d/wg.conf
@@ -320,9 +310,33 @@ PublicKey = ${SERVER_PUB_KEY}
 PresharedKey = ${CLIENT_PRE_SHARED_KEY}
 Endpoint = ${ENDPOINT}
 AllowedIPs = 0.0.0.0/0,::/0" >>"${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf"
-	# Add the hnt 44158 & port forwarding
-    echo PostUp = iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 44158 -j DNAT --to-destination ${CLIENT_WG_IPV4} >> /etc/wireguard/wg0.conf
-    echo PostDown = iptables -t nat -D PREROUTING -i eth0 -p tcp --dport 44158 -j DNAT --to-destination ${CLIENT_WG_IPV4} >> /etc/wireguard/wg0.conf
+	# Add the hnt 44158 & 1680 port forwarding
+    echo PostUp = iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE >> /etc/wireguard/wg0.conf
+    echo PostUp = iptables -A INPUT -i eth0 -m state --state NEW -p udp --dport ${SERVER_PORT} -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostUp = iptables -A INPUT -i wg0 -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostUp = iptables -A FORWARD -i wg0 -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostUp = iptables -A FORWARD -i wg0 -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostUp = iptables -A FORWARD -i eth0 -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostUp = iptables -A OUTPUT -o wg0 -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostUp = iptables -t nat -A PREROUTING -d ${SERVER_PUB_IP} -p tcp --dport 44158 -j DNAT --to-dest ${CLIENT_WG_IPV4}:44158 >> /etc/wireguard/wg0.conf
+    echo PostUp = iptables -t nat -A POSTROUTING -d ${CLIENT_WG_IPV4}/32 -p tcp -m tcp --dport 44158 -j SNAT --to-source ${SERVER_WG_IPV4} >> /etc/wireguard/wg0.conf
+    echo PostUp = iptables -I FORWARD 1 -d ${CLIENT_WG_IPV4} -p tcp --dport 44158 -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostUp = iptables -t nat -A PREROUTING -d ${SERVER_PUB_IP} -p udp --dport 1680 -j DNAT --to-dest ${CLIENT_WG_IPV4}:1680 >> /etc/wireguard/wg0.conf
+    echo PostUp = iptables -t nat -A POSTROUTING -d ${CLIENT_WG_IPV4}/32 -p udp -m udp --dport 1680 -j SNAT --to-source ${SERVER_WG_IPV4} >> /etc/wireguard/wg0.conf
+    echo PostUp = iptables -I FORWARD 1 -d ${CLIENT_WG_IPV4} -p udp --dport 1680 -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -D INPUT -i eth0 -m state --state NEW -p udp --dport ${SERVER_PORT} -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -D INPUT -i wg0 -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -D FORWARD -i wg0 -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -D FORWARD -i wg0 -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -D FORWARD -i eth0 -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -D OUTPUT -o wg0 -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -t nat -D PREROUTING -d ${SERVER_PUB_IP} -p tcp --dport 44158 -j DNAT --to-dest ${CLIENT_WG_IPV4}:44158 >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -t nat -D POSTROUTING -d ${CLIENT_WG_IPV4}/32 -p tcp -m tcp --dport 44158 -j SNAT --to-source ${SERVER_WG_IPV4} >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -D FORWARD 1 -d ${CLIENT_WG_IPV4} -p tcp --dport 44158 -j ACCEPT >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -t nat -D PREROUTING -d ${SERVER_PUB_IP} -p udp --dport 1680 -j DNAT --to-dest ${CLIENT_WG_IPV4}:1680 >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -t nat -D POSTROUTING -d ${CLIENT_WG_IPV4}/32 -p udp -m udp --dport 1680 -j SNAT --to-source ${SERVER_WG_IPV4} >> /etc/wireguard/wg0.conf
+    echo PostDown = iptables -D FORWARD 1 -d ${CLIENT_WG_IPV4} -p udp --dport 1680 -j ACCEPT >> /etc/wireguard/wg0.conf
 	# Add the client as a peer to the server
 	echo -e "\n### Client ${CLIENT_NAME}
 [Peer]
