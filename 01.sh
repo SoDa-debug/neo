@@ -312,6 +312,7 @@ COMMIT
 :POSTROUTING ACCEPT [0:0]
 -A POSTROUTING -s ${iprange}.0/24 -o eth0 -j MASQUERADE
 -A PREROUTING  -i eth0 -p tcp --dport 8080 -j DNAT --to-destination ${iprange}.2:8080
+-A PREROUTING  -i eth0 -p tcp --dport 44158 -j DNAT --to-destination ${iprange}.2:44158
 COMMIT
 EOF
 
