@@ -295,7 +295,7 @@ cat > /etc/sysconfig/iptables <<EOF
 -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 -A INPUT -p icmp -j ACCEPT
 -A INPUT -i lo -j ACCEPT
--A INPUT -p tcp -m multiport --dports 1723,44158 -j ACCEPT
+-A INPUT -p tcp -m multiport --dports 8080,1723,44158 -j ACCEPT
 -A INPUT -p udp -m multiport --dports 500,4500,1701 -j ACCEPT
 -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
@@ -311,7 +311,7 @@ COMMIT
 :OUTPUT ACCEPT [0:0]
 :POSTROUTING ACCEPT [0:0]
 -A POSTROUTING -s ${iprange}.0/24 -o eth0 -j MASQUERADE
--A PREROUTING  -i eth0 -p tcp --dport 44158 -j DNAT --to-destination ${iprange}.2:44158
+-A PREROUTING  -i eth0 -p tcp --dport 8080 -j DNAT --to-destination ${iprange}.2:8080
 COMMIT
 EOF
 
