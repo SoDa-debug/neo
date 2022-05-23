@@ -186,15 +186,15 @@ Address = ${SERVER_WG_IPV4}/24,${SERVER_WG_IPV6}/64
 ListenPort = ${SERVER_PORT}
 PrivateKey = ${SERVER_PRIV_KEY}" >"/etc/wireguard/${SERVER_WG_NIC}.conf"
 
-#	if pgrep firewalld; then
-#		FIREWALLD_IPV4_ADDRESS=$(echo "${SERVER_WG_IPV4}" | cut -d"." -f1-3)".0"
-#		FIREWALLD_IPV6_ADDRESS=$(echo "${SERVER_WG_IPV6}" | sed 's/:[^:]*$/:0/')
-#		echo "PostUp = firewall-cmd --add-port ${SERVER_PORT}/udp && firewall-cmd --add-rich-rule='rule family=ipv4 source address=#${FIREWALLD_IPV4_ADDRESS}/24 masquerade' && firewall-cmd --add-rich-rule='rule family=ipv6 source address=${FIREWALLD_IPV6_ADDRESS}/24 masquerade'
-#PostDown = firewall-cmd --remove-port ${SERVER_PORT}/udp && firewall-cmd --remove-rich-rule='rule family=ipv4 source address=#${FIREWALLD_IPV4_ADDRESS}/24 masquerade' && firewall-cmd --remove-rich-rule='rule family=ipv6 source address=${FIREWALLD_IPV6_ADDRESS}/24 #masquerade'" >>"/etc/wireguard/${SERVER_WG_NIC}.conf"
-#	else
-#		echo "PostUp = iptables -A FORWARD -i ${SERVER_PUB_NIC} -o ${SERVER_WG_NIC} -j ACCEPT; iptables -A FORWARD -i ${SERVER_WG_NIC} -j ACCEPT; #iptables -t nat -A POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE; ip6tables -A FORWARD -i ${SERVER_WG_NIC} -j ACCEPT; ip6tables -t nat -A #POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE
-#PostDown = iptables -D FORWARD -i ${SERVER_PUB_NIC} -o ${SERVER_WG_NIC} -j ACCEPT; iptables -D FORWARD -i ${SERVER_WG_NIC} -j ACCEPT; iptables -t #nat -D POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE; ip6tables -D FORWARD -i ${SERVER_WG_NIC} -j ACCEPT; ip6tables -t nat -D POSTROUTING -o #${SERVER_PUB_NIC} -j MASQUERADE" >>"/etc/wireguard/${SERVER_WG_NIC}.conf"
-#	fi
+	if pgrep firewalld; then
+		FIREWALLD_IPV4_ADDRESS=$(echo "${SERVER_WG_IPV4}" | cut -d"." -f1-3)".0"
+		FIREWALLD_IPV6_ADDRESS=$(echo "${SERVER_WG_IPV6}" | sed 's/:[^:]*$/:0/')
+		echo "PostUp = firewall-cmd --add-port ${SERVER_PORT}/udp && firewall-cmd --add-rich-rule='rule family=ipv4 source address=#${FIREWALLD_IPV4_ADDRESS}/24 masquerade' && firewall-cmd --add-rich-rule='rule family=ipv6 source address=${FIREWALLD_IPV6_ADDRESS}/24 masquerade'
+PostDown = firewall-cmd --remove-port ${SERVER_PORT}/udp && firewall-cmd --remove-rich-rule='rule family=ipv4 source address=#${FIREWALLD_IPV4_ADDRESS}/24 masquerade' && firewall-cmd --remove-rich-rule='rule family=ipv6 source address=${FIREWALLD_IPV6_ADDRESS}/24 #masquerade'" >>"/etc/wireguard/${SERVER_WG_NIC}.conf"
+	else
+		echo "PostUp = iptables -A FORWARD -i ${SERVER_PUB_NIC} -o ${SERVER_WG_NIC} -j ACCEPT; iptables -A FORWARD -i ${SERVER_WG_NIC} -j ACCEPT; #iptables -t nat -A POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE; ip6tables -A FORWARD -i ${SERVER_WG_NIC} -j ACCEPT; ip6tables -t nat -A #POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE
+PostDown = iptables -D FORWARD -i ${SERVER_PUB_NIC} -o ${SERVER_WG_NIC} -j ACCEPT; iptables -D FORWARD -i ${SERVER_WG_NIC} -j ACCEPT; iptables -t #nat -D POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE; ip6tables -D FORWARD -i ${SERVER_WG_NIC} -j ACCEPT; ip6tables -t nat -D POSTROUTING -o #${SERVER_PUB_NIC} -j MASQUERADE" >>"/etc/wireguard/${SERVER_WG_NIC}.conf"
+	fi
 
 	# Enable routing on the server
 	echo "net.ipv4.ip_forward = 1
@@ -311,18 +311,18 @@ PresharedKey = ${CLIENT_PRE_SHARED_KEY}
 Endpoint = ${ENDPOINT}
 AllowedIPs = 0.0.0.0/0,::/0" >>"${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf"
 	# Add the hnt 44158 & port forwarding
-    echo PostUp = iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1240 >> /etc/wireguard/wg0.conf
-    echo PostUp = iptables -A FORWARD -i wg0 -j ACCEPT >> /etc/wireguard/wg0.conf
-    echo PostUp = iptables -t nat -A POSTROUTING -o ens5 -j MASQUERADE >> /etc/wireguard/wg0.conf
-    echo PostUp = iptables -A FORWARD -i ens5 -o wg0 -p tcp --syn --dport 44158 -m conntrack --ctstate NEW -j ACCEPT >> /etc/wireguard/wg0.conf
-    echo PostUp = iptables -A FORWARD -i ens5 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT >> /etc/wireguard/wg0.conf
-    echo PostUp = iptables -t nat -A PREROUTING -i ens5 -p tcp --dport 44158 -j DNAT --to-destination ${CLIENT_WG_IPV4} >> /etc/wireguard/wg0.conf
-    echo PostDown = iptables -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1240 >> /etc/wireguard/wg0.conf
-    echo PostDown = iptables -D FORWARD -i wg0 -j ACCEPT >> /etc/wireguard/wg0.conf
-    echo PostDown = iptables -t nat -D POSTROUTING -o ens5 -j MASQUERADE >> /etc/wireguard/wg0.conf
-    echo PostDown = iptables -D FORWARD -i ens5 -o wg0 -p tcp --syn --dport 44158 -m conntrack --ctstate NEW -j ACCEPT >> /etc/wireguard/wg0.conf
-    echo PostDown = iptables -D FORWARD -i ens5 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT >> /etc/wireguard/wg0.conf
-    echo PostDown = iptables -t nat -D PREROUTING -i ens5 -p tcp --dport 44158 -j DNAT --to-destination ${CLIENT_WG_IPV4} >> /etc/wireguard/wg0.conf
+#    echo PostUp = iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1240 >> /etc/wireguard/wg0.conf
+#    echo PostUp = iptables -A FORWARD -i wg0 -j ACCEPT >> /etc/wireguard/wg0.conf
+#    echo PostUp = iptables -t nat -A POSTROUTING -o ens5 -j MASQUERADE >> /etc/wireguard/wg0.conf
+#    echo PostUp = iptables -A FORWARD -i ens5 -o wg0 -p tcp --syn --dport 44158 -m conntrack --ctstate NEW -j ACCEPT >> /etc/wireguard/wg0.conf
+#    echo PostUp = iptables -A FORWARD -i ens5 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT >> /etc/wireguard/wg0.conf
+#    echo PostUp = iptables -t nat -A PREROUTING -i ens5 -p tcp --dport 44158 -j DNAT --to-destination ${CLIENT_WG_IPV4} >> /etc/wireguard/wg0.conf
+#    echo PostDown = iptables -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1240 >> /etc/wireguard/wg0.conf
+#    echo PostDown = iptables -D FORWARD -i wg0 -j ACCEPT >> /etc/wireguard/wg0.conf
+#    echo PostDown = iptables -t nat -D POSTROUTING -o ens5 -j MASQUERADE >> /etc/wireguard/wg0.conf
+#    echo PostDown = iptables -D FORWARD -i ens5 -o wg0 -p tcp --syn --dport 44158 -m conntrack --ctstate NEW -j ACCEPT >> /etc/wireguard/wg0.conf
+#    echo PostDown = iptables -D FORWARD -i ens5 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT >> /etc/wireguard/wg0.conf
+#    echo PostDown = iptables -t nat -D PREROUTING -i ens5 -p tcp --dport 44158 -j DNAT --to-destination ${CLIENT_WG_IPV4} >> /etc/wireguard/wg0.conf
 	# Add the client as a peer to the server
 	echo -e "\n### Client ${CLIENT_NAME}
 [Peer]
