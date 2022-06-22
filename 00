@@ -1,4 +1,2 @@
-sudo curl -fsSL https://raw.githubusercontent.com/SoDa-debug/neo/main/001.sh -o 001.sh && sudo sh 001.sh
-sudo curl -fsSL https://raw.githubusercontent.com/SoDa-debug/neo/main/002.sh -o 002.sh && sudo sh 002.sh
-sudo curl -fsSL https://raw.githubusercontent.com/SoDa-debug/neo/main/003.sh -o 003.sh && sudo sh 003.sh
+sudo curl -fsSL https://raw.githubusercontent.com/SoDa-debug/neo/main/01.sh -o 01.sh && sudo sh 01.sh
 
