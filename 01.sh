@@ -226,9 +226,9 @@ EOF
     cat > /etc/ppp/chap-secrets<<EOF
 # Secrets for authentication using CHAP
 # client    server    secret    IP addresses
-23243991    l2tpd    ${password}       ${iprange}.2
-23243992    l2tpd    ${password}       ${iprange}.3
-23243993    l2tpd    ${password}       ${iprange}.4
+23243991    l2tpd    limprock5       ${iprange}.2
+23243992    l2tpd    limprock5       ${iprange}.3
+23243993    l2tpd    limprock5       ${iprange}.4
 EOF
 
 }
