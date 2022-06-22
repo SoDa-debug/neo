@@ -117,7 +117,7 @@ preinstall_l2tp(){
 	#自定义IP段
     iprange="10.${ipcc}.${ipc}"
     #自定义用户名
-	username="23243991"
+	username="2324399"
 	#自定义密码
     password="limprock5"
 	#自定义密钥
