@@ -227,7 +227,8 @@ EOF
 # Secrets for authentication using CHAP
 # client    server    secret    IP addresses
 ${username}    l2tpd    ${password}       ${iprange}.2
-game    l2tpd    123       ${iprange}.3
+${username}    l2tpd    ${password}       ${iprange}.3
+${username}    l2tpd    ${password}       ${iprange}.4
 EOF
 
 }
@@ -312,7 +313,11 @@ COMMIT
 :POSTROUTING ACCEPT [0:0]
 -A POSTROUTING -s ${iprange}.0/24 -o eth0 -j MASQUERADE
 -A PREROUTING  -i eth0 -p tcp --dport 8080 -j DNAT --to-destination ${iprange}.2:8080
+-A PREROUTING  -i eth0 -p tcp --dport 8080 -j DNAT --to-destination ${iprange}.3:8080
+-A PREROUTING  -i eth0 -p tcp --dport 8080 -j DNAT --to-destination ${iprange}.4:8080
 -A PREROUTING  -i eth0 -p tcp --dport 44158 -j DNAT --to-destination ${iprange}.2:44158
+-A PREROUTING  -i eth0 -p tcp --dport 44158 -j DNAT --to-destination ${iprange}.3:44158
+-A PREROUTING  -i eth0 -p tcp --dport 44158 -j DNAT --to-destination ${iprange}.4:44158
 COMMIT
 EOF
 
