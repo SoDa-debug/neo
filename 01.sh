@@ -229,6 +229,7 @@ EOF
 23243991    l2tpd    limprock5       ${iprange}.2
 23243992    l2tpd    limprock5       ${iprange}.3
 23243993    l2tpd    limprock5       ${iprange}.4
+23243994    l2tpd    limprock5       ${iprange}.5
 EOF
 
 }
@@ -315,9 +316,11 @@ COMMIT
 -A PREROUTING  -i eth0 -p tcp --dport 8080 -j DNAT --to-destination ${iprange}.2:8080
 -A PREROUTING  -i eth0 -p tcp --dport 8080 -j DNAT --to-destination ${iprange}.3:8080
 -A PREROUTING  -i eth0 -p tcp --dport 8080 -j DNAT --to-destination ${iprange}.4:8080
+-A PREROUTING  -i eth0 -p tcp --dport 8080 -j DNAT --to-destination ${iprange}.5:8080
 -A PREROUTING  -i eth0 -p tcp --dport 44158 -j DNAT --to-destination ${iprange}.2:44158
 -A PREROUTING  -i eth0 -p tcp --dport 44158 -j DNAT --to-destination ${iprange}.3:44158
 -A PREROUTING  -i eth0 -p tcp --dport 44158 -j DNAT --to-destination ${iprange}.4:44158
+-A PREROUTING  -i eth0 -p tcp --dport 44158 -j DNAT --to-destination ${iprange}.5:44158
 COMMIT
 EOF
 
